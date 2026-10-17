@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Test fixture only. A trivial per-user-capable MSI with its OWN product identity, used by the Hub's end-to-end
+  test so that install, update, repair and uninstall can be exercised for real without touching any actual
+  ASTERION application. Built by tests/fixtures/build.ps1 (WiX 5).
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="ASTERION Hub Test App" Manufacturer="ASTERION Hub Tests" Version="$(var.Version)"
+           UpgradeCode="3F7A91D2-5B84-4C0E-9E21-7D1A6C0B4F55" Scope="perUserOrMachine" Language="1033" Compressed="yes">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of the test app is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="ASTERION Hub Test App" />
+    </StandardDirectory>
+    <Feature Id="Main" Title="Test app" AllowAbsent="no">
+      <Files Directory="INSTALLFOLDER" Include="$(var.Payload)\**" />
+    </Feature>
+  </Package>
+</Wix>

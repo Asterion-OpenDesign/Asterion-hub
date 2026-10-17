@@ -1,0 +1,9 @@
+{
+  "catalog_base_url": "https://asterion-opendesign.github.io/Asterion-hub/",
+  "allowed_download_hosts": [
+    "asterion-opendesign.github.io",
+    "github.com",
+    "release-assets.githubusercontent.com",
+    "objects.githubusercontent.com"
+  ]
+}

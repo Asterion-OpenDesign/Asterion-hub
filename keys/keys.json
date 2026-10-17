@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "sequence": 1792265493,
+  "generated_at": "2026-10-17T19:31:33.4294129Z",
+  "expires_at": "2027-10-17T19:31:33.4294129Z",
+  "keys": [
+    {
+      "id": "release-2026-1",
+      "alg": "ed25519",
+      "public": "rXvi+BF8QXGfjDz0DRhtxinuSDoSKJN22GuTpfoirys=",
+      "roles": [
+        "catalog"
+      ],
+      "not_before": "2026-10-17T18:31:33.4294129Z",
+      "not_after": "2027-10-17T19:31:33.4294129Z"
+    }
+  ],
+  "revoked": []
+}

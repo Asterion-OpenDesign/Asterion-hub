@@ -1,0 +1,12 @@
+/* Archivo (variable, OFL), the one family of the ASTERION WebView surfaces. The file is a
+   byte-for-byte copy of the upstream font file. It is self-hosted: nothing external loads
+   (the CSP says font-src 'self').
+   The width axis must be declared as a range or the browser cannot interpolate it. */
+@font-face {
+  font-family: 'Archivo';
+  src: url('../../assets/fonts/archivo-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: block;
+}

@@ -1,0 +1,16 @@
+{
+  "id": "asterion-bim",
+  "name": "ASTERION BIM",
+  "summary": "Aplicación BIM de escritorio con modelo semántico, paramétrico y geométrico propio.",
+  "description": "ASTERION BIM es la primera aplicación de la familia ASTERION Design Platform: un motor BIM independiente y de código abierto que corre sin ningún producto de terceros instalado. Esta es una versión preliminar de hito 1.",
+  "publisher": "ASTERION Open Design",
+  "license": "Apache-2.0",
+  "detect": {
+    "windows": {
+      "display_name": "ASTERION BIM",
+      "publisher": "ASTERION Open Design",
+      "executable": "asterion-shell.exe",
+      "search_dirs": ["%LOCALAPPDATA%\\Programs\\ASTERION", "%PROGRAMFILES%\\ASTERION"]
+    }
+  }
+}

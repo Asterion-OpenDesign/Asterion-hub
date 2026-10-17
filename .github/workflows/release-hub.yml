@@ -1,0 +1,48 @@
+name: release-hub
+
+# Builds the Hub installer on each system and attaches it to a draft release for a person to review.
+# The installers are NOT code-signed (no certificate): see docs/SECURITY.md for what users will see.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, for example hub-v0.1.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --frozen-lockfile
+        working-directory: ui
+      - run: cargo test -p asterion-hub-core --locked
+      - run: ui/node_modules/.bin/tauri build
+        shell: bash
+      - name: Attach to the draft release (with SHA-256 files)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${{ inputs.tag }}" >/dev/null 2>&1 || gh release create "${{ inputs.tag }}" --draft --title "${{ inputs.tag }}" --notes "Unsigned build. See docs/SECURITY.md."
+          for f in target/release/bundle/nsis/*.exe target/release/bundle/dmg/*.dmg; do
+            [ -f "$f" ] || continue
+            (cd "$(dirname "$f")" && (sha256sum "$(basename "$f")" 2>/dev/null || shasum -a 256 "$(basename "$f")") > "$(basename "$f").sha256")
+            gh release upload "${{ inputs.tag }}" "$f" "$f.sha256" --clobber
+          done

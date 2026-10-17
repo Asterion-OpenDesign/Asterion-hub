@@ -1,0 +1,67 @@
+name: publish-catalog
+
+# Source of truth: catalog-src/**. A reviewed change to those files is what publishes. The signing key is
+# only available to the protected `release` environment (required reviewer), and nothing is deployed unless
+# every artifact in the freshly built catalogs downloads and re-verifies (size, SHA-256, MSI facts).
+
+on:
+  push:
+    branches: [main]
+    paths: ['catalog-src/**', 'keys/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog
+  cancel-in-progress: false
+
+jobs:
+  build-verify:
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release -p asterion-publish --locked
+      - name: Write the release key to a temporary file
+        env:
+          ASTERION_RELEASE_KEY: ${{ secrets.ASTERION_RELEASE_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$ASTERION_RELEASE_KEY" > "$RUNNER_TEMP/release.key"
+      - name: Assemble the site (keys, beta and stable catalogs)
+        run: |
+          mkdir -p site
+          cp keys/keys.json keys/keys.json.sig site/
+          for ch in beta stable; do
+            target/release/asterion-publish build --src catalog-src --channel "$ch" \
+              --release-key "$RUNNER_TEMP/release.key" --out site
+          done
+      - name: Gate - every artifact must download and verify
+        run: |
+          for ch in beta stable; do
+            target/release/asterion-publish verify --site site --roots trust/roots.json --channel "$ch" \
+              --hub-config src-tauri/hub.config.json --online
+          done
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.key"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build-verify
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

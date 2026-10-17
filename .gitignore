@@ -1,0 +1,17 @@
+/target/
+/dist-catalog/
+/.dev/
+/ui/node_modules/
+/ui/dist/
+/src-tauri/gen/
+/src-tauri/target/
+*.key
+*.secret
+*.log
+/.*.out
+/.*.err
+/ui/.*.out
+/ui/.*.err/target-mac/
+/ui/.*.err
+/ui/.*.out
+/ui/.b.*

@@ -1,0 +1,117 @@
+/* ASTERION Hub: design tokens.
+   The shared ASTERION WebView design language: two surfaces,
+   ink on paper, a blue that is INK and WASH but never a fill, hairlines that separate, no opacity on
+   text. Every foreground/background pair below is checked by `scripts/check-contrast.mjs` (WCAG 2.x,
+   AA 4.5:1 for text, 3:1 for control borders); `pnpm test` fails if a pair drops under its floor.
+   CSS is written against Chromium 110 / Safari 15: no color-mix(), no native nesting. */
+
+:root {
+  color-scheme: light;
+  --papel: #ffffff;
+  --sup-sutil: #fafafa;
+  --sup-campo: #f4f4f5;
+  --sup-hover: #f0f0f1;
+
+  --tinta: #111111;
+  --tinta-2: #54545a;
+  --tinta-3: #6b6b72;
+  --sobre-tinta: #ffffff; /* text on an ink-filled button */
+  --fondo-tinta: #111111; /* the primary action is ink, never blue */
+  --fondo-tinta-hover: #2b2b30;
+
+  --marca: #1b3be0;
+  --marca-honda: #142ca8;
+  --marca-lavado: #e4e8fc;
+
+  --filete: #e6e6e6;
+  --filete-fuerte: #d4d4d8;
+  --filete-control: #8c8884;
+
+  --ok-campo: #dcf7e8;
+  --ok-tinta: #14532d;
+  --ok-filete: #3f8259;
+  --rev-campo: #fdf0d8;
+  --rev-tinta: #6b4405;
+  --rev-filete: #8a6a1c;
+  --fdr-campo: #fbdcdf;
+  --fdr-tinta: #8e1a1d;
+  --fdr-filete: #b33b3e;
+
+  --radio: 8px;
+  --radio-md: 10px;
+  --radio-xl: 14px;
+  --sombra-superficie: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 0 1px 0 rgba(0, 0, 0, 0.06);
+  --sombra-flotante: 0 2px 8px 0 rgba(0, 0, 0, 0.06), 0 -6px 12px 0 rgba(0, 0, 0, 0.03), 0 14px 28px 0 rgba(0, 0, 0, 0.12);
+  --velo: rgba(17, 17, 17, 0.32);
+
+  --tipo-titulo: 28px;
+  --tipo-seccion: 17px;
+  --tipo-cuerpo: 15px;
+  --tipo-apagado: 14px;
+  --tipo-chico: 13px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --papel: #0c0c0e;
+  --sup-sutil: #131316;
+  --sup-campo: #1b1b1f;
+  --sup-hover: #232328;
+
+  --tinta: #f4f4f5;
+  --tinta-2: #b8b8c0;
+  --tinta-3: #9a9aa3;
+  --sobre-tinta: #0c0c0e;
+  --fondo-tinta: #f4f4f5;
+  --fondo-tinta-hover: #d9d9de;
+
+  --marca: #8fa3ff;
+  --marca-honda: #b3c0ff;
+  --marca-lavado: #171c3d;
+
+  --filete: #26262b;
+  --filete-fuerte: #33333a;
+  --filete-control: #7a7a84;
+
+  --ok-campo: #0f2a1b;
+  --ok-tinta: #7ee2a8;
+  --ok-filete: #3f8259;
+  --rev-campo: #2c2209;
+  --rev-tinta: #f1c36a;
+  --rev-filete: #8a6a1c;
+  --fdr-campo: #34161a;
+  --fdr-tinta: #ff9ea1;
+  --fdr-filete: #b33b3e;
+
+  --sombra-superficie: 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --sombra-flotante: 0 14px 40px 0 rgba(0, 0, 0, 0.6);
+  --velo: rgba(0, 0, 0, 0.62);
+}
+
+@media (forced-colors: active) {
+  :root,
+  [data-theme='dark'] {
+    --papel: Canvas;
+    --sup-sutil: Canvas;
+    --sup-campo: Canvas;
+    --sup-hover: Canvas;
+    --tinta: CanvasText;
+    --tinta-2: CanvasText;
+    --tinta-3: GrayText;
+    --sobre-tinta: Canvas;
+    --fondo-tinta: CanvasText;
+    --fondo-tinta-hover: CanvasText;
+    --marca: LinkText;
+    --marca-honda: LinkText;
+    --marca-lavado: Canvas;
+    --filete: ButtonBorder;
+    --filete-fuerte: ButtonBorder;
+    --filete-control: ButtonBorder;
+    --ok-campo: Canvas;
+    --ok-tinta: CanvasText;
+    --rev-campo: Canvas;
+    --rev-tinta: CanvasText;
+    --fdr-campo: Canvas;
+    --fdr-tinta: LinkText;
+  }
+}

@@ -1,0 +1,49 @@
+[package]
+name = "asterion-hub-core"
+description = "ASTERION Hub core: signed catalog, trust, download, install, state."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+name = "hub_core"
+
+[features]
+# Signing and key generation. Only the publisher CLI turns this on: the Hub binary never links code
+# that can produce a signature.
+publisher = ["dep:rand_core"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+reqwest.workspace = true
+futures-util.workspace = true
+sha2.workspace = true
+ed25519-dalek.workspace = true
+base64.workspace = true
+semver.workspace = true
+time.workspace = true
+hex.workspace = true
+url.workspace = true
+tracing.workspace = true
+sysinfo = { version = "0.39", default-features = false, features = ["system", "disk"] }
+msi = "0.10"
+rand_core = { version = "0.6", features = ["getrandom"], optional = true }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.56"
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading", "Win32_System_ApplicationInstallationAndServicing"] }
+
+[dev-dependencies]
+asterion-hub-core = { path = ".", features = ["publisher"] }
+tiny_http = "0.12"
+tempfile = "3"
+rand_core = { version = "0.6", features = ["getrandom"] }
+tokio = { workspace = true, features = ["test-util"] }
+
+

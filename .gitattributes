@@ -1,0 +1,8 @@
+* text=auto eol=lf
+# signed documents are verified byte for byte: never let git touch their line endings
+keys/** -text
+*.sig -text
+*.png binary
+*.ico binary
+*.icns binary
+*.woff2 binary

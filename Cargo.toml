@@ -1,0 +1,38 @@
+# ASTERION Hub is its own Cargo workspace on purpose: it does not join the engine workspace at the
+# repository root, so building the Hub never touches (or re-resolves) the engine's Cargo.lock.
+[workspace]
+resolver = "2"
+members = ["crates/hub-core", "crates/hub-publish", "src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+rust-version = "1.85"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "io-util", "sync", "time", "process"] }
+tokio-util = "0.7"
+reqwest = { version = "0.12", default-features = false, features = ["stream", "native-tls"] }
+futures-util = "0.3"
+sha2 = "0.10"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+base64 = "0.22"
+semver = "1"
+time = { version = "0.3", features = ["serde", "parsing", "formatting", "macros"] }
+hex = "0.4"
+url = "2"
+tracing = "0.1"
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"
+
+

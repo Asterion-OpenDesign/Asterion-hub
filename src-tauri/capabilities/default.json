@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The Hub window may use the Hub's own commands and listen to its events. No filesystem, shell or HTTP access from the web layer.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

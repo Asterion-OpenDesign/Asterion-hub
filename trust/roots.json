@@ -1,0 +1,10 @@
+{
+    "schema":  1,
+    "roots":  [
+                  {
+                      "alg":  "ed25519",
+                      "public":  "ZKSOdrygnnWHi7WZ9DMJXSFSvcJVFfvY5iaW1TSime8=",
+                      "id":  "root-2026-1"
+                  }
+              ]
+}
