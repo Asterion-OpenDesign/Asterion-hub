@@ -81,6 +81,8 @@ export interface AppView {
   publisher: string
   homepage: string | null
   license: string | null
+  category: string | null
+  tags: string[]
   state: AppState
   installed: InstalledView | null
   latest: ReleaseView | null
@@ -141,3 +143,11 @@ export interface CmdError {
 }
 
 export type Page = 'home' | 'apps' | 'installed' | 'updates' | 'tasks' | 'history' | 'settings'
+
+export type AppTab = 'resumen' | 'novedades' | 'requisitos'
+
+export interface Route {
+  page: Page
+  appId?: string
+  tab?: AppTab
+}

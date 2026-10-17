@@ -37,6 +37,7 @@ Anything structurally wrong rejects the whole document.
 | `name`, `summary`, `description`, `publisher` | Length limited. `summary` ≤ 280, `description` ≤ 4000. |
 | `homepage` | Optional, https. The only external link the Hub will open for the app. |
 | `license` | Optional text. |
+| `category`, `tags` | Optional. `category` (1-40 characters) groups the app in the Hub's catalog; up to 8 `tags` of up to 24 characters feed the search. Older Hubs ignore both. |
 | `detect.windows` | `{ "display_name": "...", "publisher": "..." }`: how to recognise an install in *Apps & features* (exact `DisplayName`, optional `Publisher`). |
 | `detect.macos` | `{ "bundle_id": "..." }`. |
 | `releases[]` | See below. |

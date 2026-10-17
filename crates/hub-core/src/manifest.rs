@@ -88,7 +88,7 @@ pub struct Catalog {
     pub apps: Vec<AppEntry>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct AppEntry {
     pub id: String,
     pub name: String,
@@ -100,6 +100,11 @@ pub struct AppEntry {
     pub homepage: Option<String>,
     #[serde(default)]
     pub license: Option<String>,
+    /// Display name of the group the app belongs to ("BIM", "Utilidades"...): lets the Hub browse a large catalog.
+    #[serde(default)]
+    pub category: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
     #[serde(default)]
     pub detect: Detect,
     pub releases: Vec<Release>,
@@ -290,6 +295,12 @@ impl AppEntry {
         }
         if self.publisher.trim().is_empty() || self.publisher.chars().count() > 80 {
             return bad(format!("{id}: publisher must be 1-80 characters"));
+        }
+        if self.category.as_ref().is_some_and(|c| c.trim().is_empty() || c.chars().count() > 40) {
+            return bad(format!("{id}: category must be 1-40 characters"));
+        }
+        if self.tags.len() > 8 || self.tags.iter().any(|t| t.trim().is_empty() || t.chars().count() > 24) {
+            return bad(format!("{id}: at most 8 tags of 1-24 characters"));
         }
         if let Some(h) = &self.homepage {
             let u = url::Url::parse(h).map_err(|_| HubError::InvalidMetadata(format!("{id}: homepage is not a URL")))?;
@@ -567,10 +578,8 @@ pub(crate) mod fixtures {
             summary: "s".into(),
             description: String::new(),
             publisher: "P".into(),
-            homepage: None,
-            license: None,
-            detect: Detect::default(),
             releases,
+            ..Default::default()
         }
     }
 
@@ -667,6 +676,8 @@ mod tests {
             ("msi dir property injection", Box::new(|v| art!(v)["msi"]["install_dir_property"] = "X /qn REMOVE=ALL".into())),
             ("search dir escapes", Box::new(|v| v["apps"][0]["detect"]["windows"] = serde_json::json!({"display_name":"X","search_dirs":["%LOCALAPPDATA%\\..\\x"]}))),
             ("search dir absolute", Box::new(|v| v["apps"][0]["detect"]["windows"] = serde_json::json!({"display_name":"X","search_dirs":["C:\\Windows"]}))),
+            ("category too long", Box::new(|v| v["apps"][0]["category"] = "x".repeat(41).into())),
+            ("too many tags", Box::new(|v| v["apps"][0]["tags"] = serde_json::json!(["a", "b", "c", "d", "e", "f", "g", "h", "i"]))),
             ("homepage not https", Box::new(|v| v["apps"][0]["homepage"] = "http://example.test".into())),
             ("bad timestamp", Box::new(|v| v["expires_at"] = "tomorrow".into())),
         ];

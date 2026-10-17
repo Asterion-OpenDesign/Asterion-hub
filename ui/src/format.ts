@@ -57,13 +57,18 @@ export function duration(ms: number): string {
   return `${Math.floor(s / 60)} min ${s % 60} s`
 }
 
+/** Letters for an app tile. A shared brand word ("ASTERION") says nothing, so it is skipped when other words follow. */
 export function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean)
+  let words = name.trim().split(/\s+/).filter(Boolean)
   if (words.length === 0) return '?'
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  if (words.length > 1 && words[0].toUpperCase() === 'ASTERION') words = words.slice(1)
+  if (words.length === 1) {
+    const w = words[0]
+    if (w.length <= 3 && w === w.toUpperCase()) return w
+    return w.charAt(0).toUpperCase() + w.charAt(1).toLowerCase()
+  }
   return (words[0][0] + words[1][0]).toUpperCase()
 }
-
 export function percent(done: number, total: number): number {
   return total > 0 ? Math.min(100, Math.floor((done / total) * 100)) : 0
 }

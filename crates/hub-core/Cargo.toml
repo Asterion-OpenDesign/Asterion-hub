@@ -39,6 +39,9 @@ rand_core = { version = "0.6", features = ["getrandom"], optional = true }
 winreg = "0.56"
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading", "Win32_System_ApplicationInstallationAndServicing"] }
 
+[target.'cfg(target_os = "macos")'.dependencies]
+plist = "1"
+
 [dev-dependencies]
 asterion-hub-core = { path = ".", features = ["publisher"] }
 tiny_http = "0.12"

@@ -42,48 +42,81 @@ fn is_guid(s: &str) -> bool {
     s.len() == 38 && s.starts_with('{') && s.ends_with('}')
 }
 
-pub fn detect(app: &AppEntry, record: Option<&InstallRecord>) -> Option<InstalledInfo> {
-    let rule: &WindowsDetect = app.detect.windows.as_ref().or_else(|| record.and_then(|r| r.detect.windows.as_ref()))?;
+struct ArpEntry {
+    hive_scope: InstallScope,
+    key: String,
+    display: String,
+    publisher: Option<String>,
+    version: String,
+    location: Option<PathBuf>,
+    is_msi: bool,
+}
+
+/// One pass over the three Uninstall registry hives, reused for every app. With a large catalog this is the
+/// difference between one scan and one scan per application each time the window refreshes.
+pub struct Snapshot(Vec<ArpEntry>);
+
+pub fn capture() -> Snapshot {
     let roots = [
         (HKEY_CURRENT_USER, UNINSTALL, InstallScope::User),
         (HKEY_LOCAL_MACHINE, UNINSTALL, InstallScope::Machine),
         (HKEY_LOCAL_MACHINE, UNINSTALL_WOW, InstallScope::Machine),
     ];
-    let mut best: Option<InstalledInfo> = None;
-    for (hive, path, scope) in roots {
+    let mut out = Vec::new();
+    for (hive, path, hive_scope) in roots {
         let Ok(parent) = RegKey::predef(hive).open_subkey_with_flags(path, KEY_READ) else { continue };
-        for name in parent.enum_keys().flatten() {
-            let Ok(k) = parent.open_subkey_with_flags(&name, KEY_READ) else { continue };
+        for key in parent.enum_keys().flatten() {
+            let Ok(k) = parent.open_subkey_with_flags(&key, KEY_READ) else { continue };
             let Ok(display) = k.get_value::<String, _>("DisplayName") else { continue };
-            if !display.eq_ignore_ascii_case(&rule.display_name) {
+            out.push(ArpEntry {
+                hive_scope,
+                display,
+                publisher: k.get_value::<String, _>("Publisher").ok(),
+                version: k.get_value::<String, _>("DisplayVersion").unwrap_or_default(),
+                location: k.get_value::<String, _>("InstallLocation").ok().map(|s| PathBuf::from(s.trim().trim_matches('"'))).filter(|p| !p.as_os_str().is_empty()),
+                is_msi: k.get_value::<u32, _>("WindowsInstaller").unwrap_or(0) == 1,
+                key,
+            });
+        }
+    }
+    Snapshot(out)
+}
+
+impl Snapshot {
+    pub fn detect(&self, app: &AppEntry, record: Option<&InstallRecord>) -> Option<InstalledInfo> {
+        let rule: &WindowsDetect = app.detect.windows.as_ref().or_else(|| record.and_then(|r| r.detect.windows.as_ref()))?;
+        let mut best: Option<InstalledInfo> = None;
+        for e in &self.0 {
+            if !e.display.eq_ignore_ascii_case(&rule.display_name) {
                 continue;
             }
             if let Some(want) = &rule.publisher {
-                if !k.get_value::<String, _>("Publisher").is_ok_and(|p| p.eq_ignore_ascii_case(want)) {
+                if !e.publisher.as_ref().is_some_and(|p| p.eq_ignore_ascii_case(want)) {
                     continue;
                 }
             }
-            let version = k.get_value::<String, _>("DisplayVersion").unwrap_or_default();
-            let location = k
-                .get_value::<String, _>("InstallLocation")
-                .ok()
-                .map(|s| PathBuf::from(s.trim().trim_matches('"')))
-                .filter(|p| !p.as_os_str().is_empty() && p.exists())
+            let location = e
+                .location
+                .clone()
+                .filter(|p| p.exists())
                 .or_else(|| record.and_then(|r| r.location.as_ref()).map(PathBuf::from).filter(|p| p.exists()))
                 .or_else(|| search_install_dir(rule));
-            let is_msi = k.get_value::<u32, _>("WindowsInstaller").unwrap_or(0) == 1;
-            let product_code = (is_msi && is_guid(&name)).then(|| name.clone());
+            let product_code = (e.is_msi && is_guid(&e.key)).then(|| e.key.clone());
             // The hive an ARP entry lives in does not say who the install belongs to (a per-user MSI is
             // listed under HKLM too), so ask Windows Installer for the product's real context.
-            let scope = product_code.as_deref().and_then(msi_scope).unwrap_or(scope);
-            let info = InstalledInfo { version, scope, location, product_code, display_name: display };
+            let scope = product_code.as_deref().and_then(msi_scope).unwrap_or(e.hive_scope);
+            let info = InstalledInfo { version: e.version.clone(), scope, location, product_code, display_name: e.display.clone() };
             // If both a per-user and an all-users copy exist, the per-user one is what this user runs first.
             if best.is_none() || scope == InstallScope::User {
                 best = Some(info);
             }
         }
+        best
     }
-    best
+}
+
+pub fn detect(app: &AppEntry, record: Option<&InstallRecord>) -> Option<InstalledInfo> {
+    capture().detect(app, record)
 }
 
 /// Per-user or per-machine, as Windows Installer itself registered the product for the current user.

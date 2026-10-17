@@ -22,7 +22,7 @@ The catalog is a **static, signed JSON document**. There is no API server to run
 application or a version means publishing files, not rebuilding the Hub. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/SECURITY.md](docs/SECURITY.md),
 [docs/CATALOG_FORMAT.md](docs/CATALOG_FORMAT.md), [docs/PUBLISHING.md](docs/PUBLISHING.md) and
-[docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md).
+[docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md). The interface and how it scales to a long catalog: [docs/UX.md](docs/UX.md).
 
 ## Honest limits
 

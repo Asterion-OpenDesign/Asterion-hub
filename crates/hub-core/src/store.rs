@@ -61,7 +61,7 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { channel: Channel::Stable, auto_check: AutoCheck::OnStart, install_scope: InstallScope::User, theme: Theme::System, keep_installers: false }
+        Settings { channel: Channel::Stable, auto_check: AutoCheck::OnStart, install_scope: InstallScope::User, theme: Theme::Dark, keep_installers: false }
     }
 }
 

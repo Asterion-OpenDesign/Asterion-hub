@@ -131,6 +131,7 @@ dependencies = [
  "futures-util",
  "hex",
  "msi",
+ "plist",
  "rand_core",
  "reqwest 0.12.28",
  "semver",

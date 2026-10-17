@@ -71,9 +71,11 @@ fn catalog_status(state: tauri::State<AppState>) -> CatalogStatus {
     state.engine.status()
 }
 
+// Reads the system's installed-apps list and the process list: never on the thread that paints the window.
 #[tauri::command]
-fn list_apps(state: tauri::State<AppState>) -> Vec<AppView> {
-    state.engine.apps()
+async fn list_apps(state: tauri::State<'_, AppState>) -> CmdResult<Vec<AppView>> {
+    let engine = state.engine.clone();
+    tauri::async_runtime::spawn_blocking(move || engine.apps()).await.map_err(|e| HubError::Internal(e.to_string()).into())
 }
 
 #[tauri::command]

@@ -79,10 +79,9 @@ fn app(releases: Vec<Release>) -> AppEntry {
         summary: "Throw-away product used by the Hub's own end-to-end test.".into(),
         description: String::new(),
         publisher: "ASTERION Hub Tests".into(),
-        homepage: None,
-        license: None,
         detect: Detect { windows: Some(WindowsDetect { display_name: "ASTERION Hub Test App".into(), publisher: Some("ASTERION Hub Tests".into()), search_dirs: vec![], executable: Some("testapp.exe".into()) }), macos: None },
         releases,
+        ..Default::default()
     }
 }
 

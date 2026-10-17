@@ -175,6 +175,8 @@ pub struct AppView {
     pub publisher: String,
     pub homepage: Option<String>,
     pub license: Option<String>,
+    pub category: Option<String>,
+    pub tags: Vec<String>,
     pub state: AppState,
     pub installed: Option<InstalledView>,
     /// The newest release this machine can install.
@@ -377,6 +379,7 @@ impl Engine {
         let catalog = self.catalog();
         let state = self.inner.store.state();
         let running = platform::RunningSet::capture();
+        let system = platform::SystemApps::capture();
         let tasks = self.inner.tasks.lock().unwrap();
         let active = |id: &str| tasks.iter().find(|t| t.view.app_id == id && !t.view.phase.is_final()).map(|t| t.view.id.clone());
         let mut out = Vec::new();
@@ -384,7 +387,7 @@ impl Engine {
         if let Some(cat) = &catalog {
             for app in &cat.apps {
                 seen.push(app.id.clone());
-                out.push(self.app_view(app, state.installs.get(&app.id), &running, active(&app.id), false));
+                out.push(self.app_view(app, state.installs.get(&app.id), &running, &system, active(&app.id), false));
             }
         }
         // Installed through the Hub, then dropped from the catalog: still manageable (open, uninstall).
@@ -395,15 +398,10 @@ impl Engine {
             let stub = AppEntry {
                 id: id.clone(),
                 name: if rec.name.is_empty() { id.clone() } else { rec.name.clone() },
-                summary: String::new(),
-                description: String::new(),
-                publisher: String::new(),
-                homepage: None,
-                license: None,
                 detect: rec.detect.clone(),
-                releases: vec![],
+                ..Default::default()
             };
-            let v = self.app_view(&stub, Some(rec), &running, active(id), true);
+            let v = self.app_view(&stub, Some(rec), &running, &system, active(id), true);
             if v.installed.is_some() {
                 out.push(v);
             }
@@ -435,7 +433,7 @@ impl Engine {
     }
 
     fn release_block(&self, rel: &Release, host: &HostInfo) -> Option<Incompat> {
-        let probe = AppEntry { id: "probe".into(), name: String::new(), summary: String::new(), description: String::new(), publisher: String::new(), homepage: None, license: None, detect: Default::default(), releases: vec![rel.clone()] };
+        let probe = AppEntry { id: "probe".into(), releases: vec![rel.clone()], ..Default::default() };
         let sel = probe.select(host);
         if sel.best.is_some() {
             None
@@ -444,9 +442,9 @@ impl Engine {
         }
     }
 
-    fn app_view(&self, app: &AppEntry, record: Option<&InstallRecord>, running: &platform::RunningSet, active_task: Option<String>, orphaned: bool) -> AppView {
+    fn app_view(&self, app: &AppEntry, record: Option<&InstallRecord>, running: &platform::RunningSet, system: &platform::SystemApps, active_task: Option<String>, orphaned: bool) -> AppView {
         let host = &self.inner.host;
-        let info = platform::detect(app, record);
+        let info = system.detect(app, record);
         let selection = app.select(host);
         let mut releases: Vec<&Release> = app.releases.iter().filter(|r| r.withdrawn.is_none()).collect();
         releases.sort_by_key(|r| std::cmp::Reverse(r.semver()));
@@ -514,6 +512,8 @@ impl Engine {
             publisher: app.publisher.clone(),
             homepage: app.homepage.clone(),
             license: app.license.clone(),
+            category: app.category.clone(),
+            tags: app.tags.clone(),
             state,
             installed,
             latest,
@@ -694,13 +694,8 @@ impl Engine {
             (None, Some(r)) if action == Action::Uninstall => AppEntry {
                 id: app_id.into(),
                 name: r.name.clone(),
-                summary: String::new(),
-                description: String::new(),
-                publisher: String::new(),
-                homepage: None,
-                license: None,
                 detect: r.detect.clone(),
-                releases: vec![],
+                ..Default::default()
             },
             _ => return Err(HubError::UnknownApp(app_id.into())),
         };
@@ -928,7 +923,7 @@ impl Engine {
         let catalog = self.catalog();
         let record = state.installs.get(app_id);
         let app = catalog.as_ref().and_then(|c| c.app(app_id)).cloned().or_else(|| {
-            record.map(|r| AppEntry { id: app_id.into(), name: r.name.clone(), summary: String::new(), description: String::new(), publisher: String::new(), homepage: None, license: None, detect: r.detect.clone(), releases: vec![] })
+            record.map(|r| AppEntry { id: app_id.into(), name: r.name.clone(), detect: r.detect.clone(), ..Default::default() })
         });
         let app = app.ok_or_else(|| HubError::UnknownApp(app_id.into()))?;
         let info = platform::detect(&app, record).ok_or_else(|| HubError::NotInstalled(app.name.clone()))?;

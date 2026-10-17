@@ -1,117 +1,146 @@
-/* ASTERION Hub: design tokens.
-   The shared ASTERION WebView design language: two surfaces,
-   ink on paper, a blue that is INK and WASH but never a fill, hairlines that separate, no opacity on
-   text. Every foreground/background pair below is checked by `scripts/check-contrast.mjs` (WCAG 2.x,
-   AA 4.5:1 for text, 3:1 for control borders); `pnpm test` fails if a pair drops under its floor.
+/* ASTERION Hub: design tokens (the shared ASTERION identity).
+   Two themes on the same names: "noche" (dark, the default) and "papel" (light). Elevation is made of
+   translucent planes laid over the floor (lavado-1/2/3), selection is a "realce", and the blue is spent
+   where it means something (the action, the current place, an update waiting) as a stroke or a slab, never
+   as decoration. No opacity on text: every ink level is its own token.
+   `scripts/check-contrast.mjs` composites the planes over the floor and checks every foreground/background
+   pair below (WCAG 2.x: 4.5:1 for text, 3:1 for control borders) in both themes; `pnpm test` fails below the floor.
    CSS is written against Chromium 110 / Safari 15: no color-mix(), no native nesting. */
 
-:root {
-  color-scheme: light;
-  --papel: #ffffff;
-  --sup-sutil: #fafafa;
-  --sup-campo: #f4f4f5;
-  --sup-hover: #f0f0f1;
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --noche: #000000; /* the floor */
+  --lavado-1: rgba(255, 255, 255, 0.03); /* plane: rail, bars, resting cards */
+  --lavado-2: rgba(255, 255, 255, 0.05); /* strip: hover */
+  --lavado-3: rgba(255, 255, 255, 0.075); /* track: wells, progress */
+  --realce: rgba(255, 255, 255, 0.075); /* selected row / current nav */
+  --realce-canto: rgba(255, 255, 255, 0.11);
 
-  --tinta: #111111;
-  --tinta-2: #54545a;
-  --tinta-3: #6b6b72;
-  --sobre-tinta: #ffffff; /* text on an ink-filled button */
-  --fondo-tinta: #111111; /* the primary action is ink, never blue */
-  --fondo-tinta-hover: #2b2b30;
+  --nieve: #ffffff; /* ink on the floor */
+  --nieve-2: #9b9ba3; /* second ink */
+  --tinta-inversa: #111111; /* ink on a white button */
+  --fondo-inverso: #ffffff;
 
-  --marca: #1b3be0;
+  --filo: rgba(255, 255, 255, 0.1);
+  --filo-2: rgba(255, 255, 255, 0.16);
+  --borde-control: #7b7b86; /* where a control starts: >= 3:1 */
+
+  --marca: #1b3be0; /* the slab and the primary action */
   --marca-honda: #142ca8;
-  --marca-lavado: #e4e8fc;
+  --marca-tinta: #ffffff; /* ink inside the slab */
+  --marca-sobre: #d4dbfc; /* second ink inside the slab */
+  --marca-canto: #8aa0ff; /* the light rim of the slab */
+  --marca-clara: #8aa0ff; /* the blue as text/stroke on the floor */
+  --marca-trazo: #5b78ff;
+  --marca-lavado: #11183f; /* a quiet blue field */
 
-  --filete: #e6e6e6;
-  --filete-fuerte: #d4d4d8;
-  --filete-control: #8c8884;
+  --ok-campo: #0b2418;
+  --ok-tinta: #5ee9a0;
+  --ok-filo: #307d55;
+  --rev-campo: #2b2008;
+  --rev-tinta: #ffc65c;
+  --rev-filo: #8f7526;
+  --fdr-campo: #2e1113;
+  --fdr-tinta: #ff8e90;
+  --fdr-filo: #9e5459;
+  --nau-campo: #232326; /* neutral + disabled */
+  --nau-tinta: #d4d4d8;
+
+  --sombra-flotante: 0 18px 48px 0 rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --velo: rgba(0, 0, 0, 0.66);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --noche: #ffffff;
+  --lavado-1: rgba(0, 0, 0, 0.04);
+  --lavado-2: rgba(0, 0, 0, 0.065);
+  --lavado-3: rgba(0, 0, 0, 0.085);
+  --realce: rgba(0, 0, 0, 0.09);
+  --realce-canto: rgba(0, 0, 0, 0.04);
+
+  --nieve: #0e1016;
+  --nieve-2: #4a4e5e;
+  --tinta-inversa: #ffffff;
+  --fondo-inverso: #0e1016;
+
+  --filo: rgba(14, 16, 22, 0.1);
+  --filo-2: rgba(14, 16, 22, 0.18);
+  --borde-control: #8c8c96;
+
+  --marca-clara: #1b3be0;
+  --marca-trazo: #2b47e4;
+  --marca-lavado: #e4e8fc;
 
   --ok-campo: #dcf7e8;
   --ok-tinta: #14532d;
-  --ok-filete: #3f8259;
+  --ok-filo: #3f8259;
   --rev-campo: #fdf0d8;
   --rev-tinta: #6b4405;
-  --rev-filete: #8a6a1c;
+  --rev-filo: #8a6a1c;
   --fdr-campo: #fbdcdf;
   --fdr-tinta: #8e1a1d;
-  --fdr-filete: #b33b3e;
+  --fdr-filo: #b33b3e;
+  --nau-campo: #ebebec;
+  --nau-tinta: #3f3b36;
 
-  --radio: 8px;
-  --radio-md: 10px;
-  --radio-xl: 14px;
-  --sombra-superficie: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 0 1px 0 rgba(0, 0, 0, 0.06);
-  --sombra-flotante: 0 2px 8px 0 rgba(0, 0, 0, 0.06), 0 -6px 12px 0 rgba(0, 0, 0, 0.03), 0 14px 28px 0 rgba(0, 0, 0, 0.12);
-  --velo: rgba(17, 17, 17, 0.32);
+  --sombra-flotante: 0 2px 8px 0 rgba(0, 0, 0, 0.06), 0 -6px 12px 0 rgba(0, 0, 0, 0.03), 0 14px 28px 0 rgba(0, 0, 0, 0.14);
+  --velo: rgba(14, 16, 22, 0.4);
+}
 
-  --tipo-titulo: 28px;
-  --tipo-seccion: 17px;
+:root {
+  /* HeroUI geometry, as in the product: controls 12, containers 16, sheets 24 */
+  --radio-sm: 8px;
+  --radio: 12px;
+  --radio-lg: 16px;
+  --radio-xl: 24px;
+
+  --fuente: 'Archivo', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --tipo-display: 44px;
+  --tipo-titulo: 32px;
+  --tipo-seccion: 18px;
   --tipo-cuerpo: 15px;
   --tipo-apagado: 14px;
   --tipo-chico: 13px;
-}
+  --tipo-rotulo: 12px;
 
-[data-theme='dark'] {
-  color-scheme: dark;
-  --papel: #0c0c0e;
-  --sup-sutil: #131316;
-  --sup-campo: #1b1b1f;
-  --sup-hover: #232328;
-
-  --tinta: #f4f4f5;
-  --tinta-2: #b8b8c0;
-  --tinta-3: #9a9aa3;
-  --sobre-tinta: #0c0c0e;
-  --fondo-tinta: #f4f4f5;
-  --fondo-tinta-hover: #d9d9de;
-
-  --marca: #8fa3ff;
-  --marca-honda: #b3c0ff;
-  --marca-lavado: #171c3d;
-
-  --filete: #26262b;
-  --filete-fuerte: #33333a;
-  --filete-control: #7a7a84;
-
-  --ok-campo: #0f2a1b;
-  --ok-tinta: #7ee2a8;
-  --ok-filete: #3f8259;
-  --rev-campo: #2c2209;
-  --rev-tinta: #f1c36a;
-  --rev-filete: #8a6a1c;
-  --fdr-campo: #34161a;
-  --fdr-tinta: #ff9ea1;
-  --fdr-filete: #b33b3e;
-
-  --sombra-superficie: 0 0 0 1px rgba(255, 255, 255, 0.02);
-  --sombra-flotante: 0 14px 40px 0 rgba(0, 0, 0, 0.6);
-  --velo: rgba(0, 0, 0, 0.62);
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --barra-h: 52px;
 }
 
 @media (forced-colors: active) {
   :root,
-  [data-theme='dark'] {
-    --papel: Canvas;
-    --sup-sutil: Canvas;
-    --sup-campo: Canvas;
-    --sup-hover: Canvas;
-    --tinta: CanvasText;
-    --tinta-2: CanvasText;
-    --tinta-3: GrayText;
-    --sobre-tinta: Canvas;
-    --fondo-tinta: CanvasText;
-    --fondo-tinta-hover: CanvasText;
-    --marca: LinkText;
-    --marca-honda: LinkText;
+  [data-theme='dark'],
+  [data-theme='light'] {
+    --noche: Canvas;
+    --lavado-1: Canvas;
+    --lavado-2: Canvas;
+    --lavado-3: Canvas;
+    --realce: Canvas;
+    --realce-canto: ButtonBorder;
+    --nieve: CanvasText;
+    --nieve-2: CanvasText;
+    --tinta-inversa: Canvas;
+    --fondo-inverso: CanvasText;
+    --filo: ButtonBorder;
+    --filo-2: ButtonBorder;
+    --borde-control: ButtonBorder;
+    --marca: Highlight;
+    --marca-honda: Highlight;
+    --marca-tinta: HighlightText;
+    --marca-sobre: HighlightText;
+    --marca-canto: ButtonBorder;
+    --marca-clara: LinkText;
+    --marca-trazo: LinkText;
     --marca-lavado: Canvas;
-    --filete: ButtonBorder;
-    --filete-fuerte: ButtonBorder;
-    --filete-control: ButtonBorder;
     --ok-campo: Canvas;
     --ok-tinta: CanvasText;
     --rev-campo: Canvas;
     --rev-tinta: CanvasText;
     --fdr-campo: Canvas;
     --fdr-tinta: LinkText;
+    --nau-campo: Canvas;
+    --nau-tinta: GrayText;
   }
 }

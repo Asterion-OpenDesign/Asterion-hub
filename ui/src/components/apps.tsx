@@ -1,9 +1,10 @@
-import { ArrowUpCircle, CheckCircle2, Download, Play, Wrench, Trash2, MinusCircle } from 'lucide-react'
-import { actionLabel, describeError, stateLabel } from '../copy'
-import { initials } from '../format'
+import { ArrowRight, ArrowUpCircle, Download, MinusCircle, MoreHorizontal, Play, Trash2, Wrench } from 'lucide-react'
+import { actionLabel, describeError } from '../copy'
+import { initials, percent } from '../format'
+import { categoryOf } from '../catalog'
 import { useHub } from '../store'
 import type { Action, AppView } from '../types'
-import { Button, Chip, type Tone } from './ui'
+import { Button, Menu, Pill, Progress } from './ui'
 
 export interface Primary {
   kind: Action | 'open'
@@ -16,9 +17,7 @@ export function primaryFor(a: AppView): Primary | null {
   if (a.active_task) return null
   switch (a.state) {
     case 'update_available':
-      return a.installed?.running
-        ? { kind: 'update', label: actionLabel.update, disabled: true, note: `Cierra ${a.name} para actualizar` }
-        : { kind: 'update', label: actionLabel.update }
+      return a.installed?.running ? { kind: 'update', label: actionLabel.update, disabled: true, note: `Cierra ${a.name} para actualizar` } : { kind: 'update', label: actionLabel.update }
     case 'installed':
       if (a.installed?.running) return { kind: 'open', label: 'En ejecución', disabled: true }
       if (!a.installed?.can_open) return { kind: 'open', label: actionLabel.open, disabled: true, note: 'No se encontró el ejecutable' }
@@ -41,47 +40,83 @@ export function useDo() {
   }
 }
 
-export function AppAvatar({ name, size = 44 }: { name: string; size?: number }) {
+export function Tile({ app, size = 44 }: { app: Pick<AppView, 'name' | 'state' | 'installed'>; size?: number }) {
+  const cls = app.state === 'update_available' ? 'tile--update' : app.state === 'installed' ? 'tile--ok' : app.state === 'unavailable' ? 'tile--dim' : ''
   return (
-    <div className="avatar" style={{ width: size, height: size, fontSize: size * 0.36 }} aria-hidden>
+    <div className={`tile ${cls}`} style={{ width: size, height: size, fontSize: size * 0.34 }} aria-hidden>
+      {initials(app.name)}
+    </div>
+  )
+}
+
+export function NameTile({ name, size = 40 }: { name: string; size?: number }) {
+  return (
+    <div className="tile" style={{ width: size, height: size, fontSize: size * 0.34 }} aria-hidden>
       {initials(name)}
     </div>
   )
 }
 
-export function StateChip({ app }: { app: AppView }) {
-  const tone: Tone = app.state === 'installed' ? 'ok' : app.state === 'update_available' ? 'marca' : 'neutral'
-  const text = app.state === 'installed' && app.installed ? `Instalada · ${app.installed.version}` : app.state === 'update_available' && app.latest ? `Actualización · ${app.latest.version}` : stateLabel(app)
-  return <Chip tone={tone}>{text}</Chip>
+export function StatePill({ app }: { app: AppView }) {
+  switch (app.state) {
+    case 'installed':
+      return <Pill tone="ok">Instalada</Pill>
+    case 'update_available':
+      return <Pill tone="marca">Actualización</Pill>
+    case 'not_installed':
+      return <Pill>Disponible</Pill>
+    case 'unavailable':
+      return <Pill dot={false}>No disponible aquí</Pill>
+  }
 }
 
-export function PrimaryButton({ app, small }: { app: AppView; small?: boolean }) {
+export function PrimaryButton({ app, small, variant }: { app: AppView; small?: boolean; variant?: 'primary' | 'accent' | 'inverse' }) {
   const doIt = useDo()
   const p = primaryFor(app)
   if (!p) return null
   const Icon = icons[p.kind]
   return (
-    <Button variant="primary" small={small} disabled={p.disabled} icon={<Icon size={16} aria-hidden />} onClick={(e) => (e.stopPropagation(), doIt(app, p.kind))} title={p.note}>
+    <Button variant={variant ?? (p.kind === 'install' ? 'accent' : 'primary')} small={small} disabled={p.disabled} icon={<Icon size={16} aria-hidden />} onClick={(e) => (e.stopPropagation(), doIt(app, p.kind))} title={p.note}>
       {p.label}
     </Button>
   )
 }
 
-export function SecondaryButtons({ app, small }: { app: AppView; small?: boolean }) {
+/** Repair and uninstall live behind "···": rare, and never next to the one thing most people want. */
+export function MoreMenu({ app, small = true }: { app: AppView; small?: boolean }) {
   const doIt = useDo()
-  const running = app.installed?.running
-  const items = app.actions.filter((x) => x !== 'install' && x !== 'update')
+  const items = app.actions.filter((x) => x === 'repair' || x === 'uninstall')
+  if (items.length === 0) return null
+  const running = !!app.installed?.running
   return (
-    <>
-      {items.map((act) => {
-        const Icon = icons[act]
-        return (
-          <Button key={act} small={small} variant={act === 'uninstall' ? 'ghost' : 'secondary'} disabled={!!running} title={running ? `Cierra ${app.name} primero` : undefined} icon={<Icon size={15} aria-hidden />} onClick={(e) => (e.stopPropagation(), doIt(app, act))}>
-            {actionLabel[act]}
-          </Button>
-        )
-      })}
-    </>
+    <Menu
+      trigger={(p) => (
+        <Button {...p} small={small} variant="ghost" aria-label={`Más acciones de ${app.name}`} icon={<MoreHorizontal size={18} aria-hidden />} />
+      )}
+    >
+      {(close) => (
+        <>
+          {items.map((act) => {
+            const Icon = icons[act]
+            return (
+              <button
+                key={act}
+                role="menuitem"
+                className={act === 'uninstall' ? 'danger' : ''}
+                disabled={running}
+                title={running ? `Cierra ${app.name} primero` : undefined}
+                onClick={() => {
+                  close()
+                  doIt(app, act)
+                }}
+              >
+                <Icon size={16} aria-hidden /> {actionLabel[act]}
+              </button>
+            )
+          })}
+        </>
+      )}
+    </Menu>
   )
 }
 
@@ -96,53 +131,132 @@ function Availability({ app }: { app: AppView }) {
   if (app.newer_blocked?.blocked) {
     return (
       <p className="card__note">
-        <MinusCircle size={14} aria-hidden /> {app.newer_blocked.version} no disponible aquí: {describeError(app.newer_blocked.blocked).title.toLowerCase()}
+        <MinusCircle size={14} aria-hidden /> {app.newer_blocked.version}: {describeError(app.newer_blocked.blocked).title.toLowerCase()}
       </p>
     )
   }
   return null
 }
 
-export function AppCard({ app }: { app: AppView }) {
-  const { select, tasks } = useHub()
-  const task = tasks.find((t) => t.id === app.active_task)
+export function Ver({ from, to }: { from?: string | null; to?: string | null }) {
+  if (from && to && from !== to)
+    return (
+      <span className="ver">
+        {from}
+        <ArrowRight size={13} aria-hidden />
+        <strong>{to}</strong>
+      </span>
+    )
+  return <span className="ver">{to ?? from ?? '—'}</span>
+}
+
+function TaskMini({ app }: { app: AppView }) {
+  const task = useHub((s) => s.tasks.find((t) => t.id === app.active_task))
+  if (!task) return <span className="muted small">En curso…</span>
+  const downloading = task.phase === 'downloading' && task.bytes_total > 0
   return (
-    <article className="card card--app" tabIndex={0} onClick={() => select(app.id)} onKeyDown={(e) => e.key === 'Enter' && select(app.id)} aria-label={app.name}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <Progress label={task.phase} value={percent(task.bytes_done, task.bytes_total)} indeterminate={!downloading} />
+      <span className="muted small">{downloading ? `${percent(task.bytes_done, task.bytes_total)} %` : 'Instalando…'}</span>
+    </div>
+  )
+}
+
+export function AppCard({ app }: { app: AppView }) {
+  const openApp = useHub((s) => s.openApp)
+  return (
+    <article className="card card--link" tabIndex={0} onClick={() => openApp(app.id)} onKeyDown={(e) => e.key === 'Enter' && openApp(app.id)} aria-label={app.name}>
       <div className="card__top">
-        <AppAvatar name={app.name} />
-        <StateChip app={app} />
+        <Tile app={app} />
+        <StatePill app={app} />
       </div>
       <h3>{app.name}</h3>
-      <p className="card__publisher">{app.publisher}</p>
+      <p className="card__sub">
+        {app.publisher}
+        {app.category ? ` · ${categoryOf(app)}` : ''}
+      </p>
       <p className="card__summary">{app.summary}</p>
       <Availability app={app} />
       <div className="card__foot">
-        {task ? (
-          <span className="card__busy">
-            {task.phase === 'downloading' && task.bytes_total > 0 ? `${Math.floor((task.bytes_done / task.bytes_total) * 100)} %` : 'En curso…'}
-          </span>
-        ) : (
-          <PrimaryButton app={app} small />
-        )}
-        {app.state === 'installed' && !task && <CheckCircle2 size={18} className="card__ok" aria-label="Instalada" />}
+        {app.active_task ? <TaskMini app={app} /> : <PrimaryButton app={app} small />}
+        {!app.active_task && (app.installed || app.latest) && <Ver from={app.installed?.version} to={app.state === 'update_available' ? app.latest?.version : (app.installed?.version ?? app.latest?.version)} />}
       </div>
     </article>
   )
 }
 
-export function AppRow({ app, children }: { app: AppView; children?: React.ReactNode }) {
-  const { select } = useHub()
+export function CatalogRow({ app }: { app: AppView }) {
+  const openApp = useHub((s) => s.openApp)
   return (
-    <div className="row" onClick={() => select(app.id)} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && select(app.id)}>
-      <AppAvatar name={app.name} size={40} />
+    <div className="row" role="button" tabIndex={0} onClick={() => openApp(app.id)} onKeyDown={(e) => e.key === 'Enter' && openApp(app.id)}>
+      <Tile app={app} size={40} />
       <div className="row__main">
-        <h3>{app.name}</h3>
+        <h3>
+          {app.name}
+          {app.category && <span className="chip hide-narrow">{categoryOf(app)}</span>}
+        </h3>
         <p>{app.summary || app.publisher}</p>
       </div>
-      <div className="row__meta">{children ?? <StateChip app={app} />}</div>
-      <div className="row__actions">
-        <PrimaryButton app={app} small />
+      <div className="row__meta">
+        <Ver from={app.installed?.version} to={app.state === 'update_available' ? app.latest?.version : (app.installed?.version ?? app.latest?.version)} />
+        <StatePill app={app} />
       </div>
+      <div className="row__actions">{app.active_task ? <TaskMini app={app} /> : <PrimaryButton app={app} small />}</div>
     </div>
+  )
+}
+
+/** An update waiting: a slab of blue, because it is the one thing in the Hub that asks for a decision. */
+export function UpdateSlab({ app, notes = 2 }: { app: AppView; notes?: number }) {
+  const openApp = useHub((s) => s.openApp)
+  return (
+    <article className="losa losa--row" tabIndex={0} onClick={() => openApp(app.id, 'novedades')} onKeyDown={(e) => e.key === 'Enter' && openApp(app.id, 'novedades')} aria-label={`Actualizar ${app.name}`}>
+      <div className="tile" style={{ width: 44, height: 44, fontSize: 15, background: 'var(--marca-honda)', borderColor: 'var(--marca-canto)', color: 'var(--marca-tinta)' }} aria-hidden>
+        {initials(app.name)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h3>{app.name}</h3>
+        <p className="sub small" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <Ver from={app.installed?.version} to={app.latest?.version} />
+          {app.latest && app.latest.notes.length > 0 && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.latest.notes.slice(0, notes).join(' · ')}</span>}
+        </p>
+      </div>
+      {app.active_task ? (
+        <div style={{ width: 160 }}>
+          <TaskMini app={app} />
+        </div>
+      ) : (
+        <PrimaryButton app={app} small />
+      )}
+    </article>
+  )
+}
+
+export function OpenButton({ app }: { app: AppView }) {
+  const open = useHub((s) => s.open)
+  const running = !!app.installed?.running
+  const can = !!app.installed?.can_open && !running
+  return (
+    <Button variant="primary" small disabled={!can} icon={<Play size={16} aria-hidden />} onClick={(e) => (e.stopPropagation(), void open(app.id))} title={!app.installed?.can_open ? 'No se encontró el ejecutable' : undefined}>
+      {running ? 'En ejecución' : actionLabel.open}
+    </Button>
+  )
+}
+
+/** Installed apps as a launcher: the Hub is also where you start them. */
+export function LaunchCard({ app }: { app: AppView }) {
+  const openApp = useHub((s) => s.openApp)
+  return (
+    <article className="card card--link" tabIndex={0} onClick={() => openApp(app.id)} onKeyDown={(e) => e.key === 'Enter' && openApp(app.id)} aria-label={app.name}>
+      <div className="card__top">
+        <Tile app={app} size={40} />
+        {app.installed?.running ? <Pill tone="ok">En ejecución</Pill> : <Ver from={app.installed?.version} to={app.installed?.version} />}
+      </div>
+      <h3>{app.name}</h3>
+      <p className="card__sub">{app.state === 'update_available' && app.latest ? `Actualización a ${app.latest.version}` : 'Lista para abrir'}</p>
+      <div className="card__foot">
+        {app.active_task ? <TaskMini app={app} /> : <OpenButton app={app} />}
+      </div>
+    </article>
   )
 }

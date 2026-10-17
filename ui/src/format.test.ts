@@ -28,8 +28,11 @@ test('percent is clamped and safe on an unknown total', () => {
 })
 
 test('initials', () => {
-  assert.equal(initials('ASTERION BIM'), 'AB')
-  assert.equal(initials('Hub'), 'HU')
+  assert.equal(initials('ASTERION BIM'), 'BIM')
+  assert.equal(initials('ASTERION Clash'), 'Cl')
+  assert.equal(initials('ASTERION Hub Test App'), 'HT')
+  assert.equal(initials('Hub'), 'Hu')
+  assert.equal(initials('ASTERION'), 'As')
   assert.equal(initials('  '), '?')
 })
 

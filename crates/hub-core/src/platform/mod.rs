@@ -70,6 +70,18 @@ pub fn host_info(hub_version: semver::Version) -> HostInfo {
     HostInfo { os, arch, os_version: imp::os_version(), hub_version }
 }
 
+/// What the system says is installed, read once. Use it when asking about many apps.
+pub struct SystemApps(imp::Snapshot);
+
+impl SystemApps {
+    pub fn capture() -> SystemApps {
+        SystemApps(imp::capture())
+    }
+    pub fn detect(&self, app: &AppEntry, record: Option<&InstallRecord>) -> Option<InstalledInfo> {
+        self.0.detect(app, record)
+    }
+}
+
 /// Is the app installed, by what the system itself says (not by what this Hub remembers)?
 pub fn detect(app: &AppEntry, record: Option<&InstallRecord>) -> Option<InstalledInfo> {
     imp::detect(app, record)

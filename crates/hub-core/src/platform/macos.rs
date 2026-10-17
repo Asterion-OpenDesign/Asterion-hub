@@ -34,13 +34,12 @@ pub fn default_install_dir(_app_id: &str, scope: InstallScope) -> Option<PathBuf
     }
 }
 
+fn read_info(app: &Path) -> Option<plist::Dictionary> {
+    plist::Value::from_file(app.join("Contents").join("Info.plist")).ok()?.into_dictionary()
+}
+
 fn plist_value(app: &Path, key: &str) -> Option<String> {
-    let out = Command::new("/usr/bin/plutil")
-        .args(["-extract", key, "raw", "-o", "-"])
-        .arg(app.join("Contents").join("Info.plist"))
-        .output()
-        .ok()?;
-    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).trim().to_string()).filter(|s| !s.is_empty())
+    read_info(app)?.get(key)?.as_string().map(str::to_string).filter(|s| !s.is_empty())
 }
 
 fn search_dirs() -> Vec<(PathBuf, InstallScope)> {
@@ -51,19 +50,41 @@ fn search_dirs() -> Vec<(PathBuf, InstallScope)> {
     v
 }
 
-pub fn detect(app: &AppEntry, record: Option<&InstallRecord>) -> Option<InstalledInfo> {
-    let rule = app.detect.macos.as_ref().or_else(|| record.and_then(|r| r.detect.macos.as_ref()))?;
+/// The bundles in the Applications folders, read once and reused for every app.
+pub struct Snapshot(Vec<(PathBuf, InstallScope, String, String)>);
+
+pub fn capture() -> Snapshot {
+    let mut out = Vec::new();
     for (dir, scope) in search_dirs() {
         let Ok(rd) = std::fs::read_dir(&dir) else { continue };
         for e in rd.flatten() {
             let p = e.path();
-            if p.extension().is_some_and(|x| x == "app") && plist_value(&p, "CFBundleIdentifier").as_deref() == Some(rule.bundle_id.as_str()) {
-                let version = plist_value(&p, "CFBundleShortVersionString").unwrap_or_default();
-                return Some(InstalledInfo { version, scope, location: Some(p), product_code: None, display_name: app.name.clone() });
+            if p.extension().is_some_and(|x| x == "app") {
+                if let Some(info) = read_info(&p) {
+                    let get = |k: &str| info.get(k).and_then(|v| v.as_string()).unwrap_or_default().to_string();
+                    out.push((p, scope, get("CFBundleIdentifier"), get("CFBundleShortVersionString")));
+                }
             }
         }
     }
-    None
+    Snapshot(out)
+}
+
+impl Snapshot {
+    pub fn detect(&self, app: &AppEntry, record: Option<&InstallRecord>) -> Option<InstalledInfo> {
+        let rule = app.detect.macos.as_ref().or_else(|| record.and_then(|r| r.detect.macos.as_ref()))?;
+        self.0.iter().find(|(_, _, id, _)| *id == rule.bundle_id).map(|(path, scope, _, version)| InstalledInfo {
+            version: version.clone(),
+            scope: *scope,
+            location: Some(path.clone()),
+            product_code: None,
+            display_name: app.name.clone(),
+        })
+    }
+}
+
+pub fn detect(app: &AppEntry, record: Option<&InstallRecord>) -> Option<InstalledInfo> {
+    capture().detect(app, record)
 }
 
 fn run(cmd: &mut Command, what: &'static str) -> Result<std::process::Output> {

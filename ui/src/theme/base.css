@@ -12,9 +12,9 @@ body,
 
 body {
   margin: 0;
-  background: var(--papel);
-  color: var(--tinta);
-  font-family: 'Archivo', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--noche);
+  color: var(--nieve);
+  font-family: var(--fuente);
   font-size: var(--tipo-cuerpo);
   line-height: 1.5;
   letter-spacing: -0.011em;
@@ -36,12 +36,14 @@ body {
 h1,
 h2,
 h3,
+h4,
 p,
 ul,
 ol,
 dl,
 dd,
-pre {
+pre,
+figure {
   margin: 0;
   padding: 0;
 }
@@ -73,7 +75,7 @@ svg {
 }
 
 :focus-visible {
-  outline: 2px solid var(--tinta);
+  outline: 2px solid var(--nieve);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -81,7 +83,7 @@ svg {
 code {
   font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
   font-size: 0.9em;
-  background: var(--sup-campo);
+  background: var(--lavado-3);
   padding: 1px 6px;
   border-radius: 6px;
 }
@@ -93,14 +95,24 @@ pre {
   word-break: break-word;
 }
 
+/* the machine voice: the same family, stretched, with tabular figures (never a second font) */
+.maq {
+  font-stretch: 112%;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--filete-fuerte);
+  background: var(--filo-2);
   border-radius: 8px;
-  border: 2px solid var(--papel);
+  border: 3px solid var(--noche);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nieve-2);
 }
 
 @media (prefers-reduced-motion: reduce) {

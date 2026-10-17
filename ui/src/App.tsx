@@ -1,14 +1,18 @@
 import { useEffect } from 'react'
 import { hasHost } from './api'
-import { AppDetail } from './components/AppDetail'
-import { ConfirmDialog, Sidebar, Toasts } from './components/Shell'
 import { Wordmark } from './components/Logo'
-import { Apps, History, Home, Installed, SettingsView, Tasks, Updates } from './views'
-import { useHub } from './store'
+import { Palette } from './components/Palette'
+import { ConfirmDialog, Rail, Toasts, TopBar } from './components/Shell'
 import { describeError } from './copy'
+import { useHub } from './store'
+import { AppPage } from './views/AppPage'
+import { Catalog } from './views/Catalog'
+import { Home } from './views/Home'
+import { History, Installed, Tasks, Updates } from './views/Lists'
+import { SettingsView } from './views/Settings'
 
 export default function App() {
-  const { init, booted, bootError, page } = useHub()
+  const { init, booted, bootError, route } = useHub()
   useEffect(() => {
     if (hasHost()) void init()
   }, [init])
@@ -19,7 +23,7 @@ export default function App() {
         <Wordmark />
         <h1>Esta página necesita el motor del Hub</h1>
         <p>
-          El motor (Rust) es quien instala, verifica y detecta aplicaciones; esta interfaz solo lo muestra. Ábrela con <code>pnpm tauri dev</code> y no se mostrará ningún dato inventado.
+          El motor (Rust) es quien instala, verifica y detecta aplicaciones; esta interfaz solo lo muestra. Ábrela con <code>tauri dev</code> y no se mostrará ningún dato inventado.
         </p>
       </div>
     )
@@ -47,19 +51,28 @@ export default function App() {
 
   return (
     <div className="app">
-      <Sidebar />
-      <main className="main" id="main">
-        <div className="main__inner">
-          {page === 'home' && <Home />}
-          {page === 'apps' && <Apps />}
-          {page === 'installed' && <Installed />}
-          {page === 'updates' && <Updates />}
-          {page === 'tasks' && <Tasks />}
-          {page === 'history' && <History />}
-          {page === 'settings' && <SettingsView />}
-        </div>
-      </main>
-      <AppDetail />
+      <Rail />
+      <div className="col">
+        <TopBar />
+        <main className="scroll" id="main" key={route.page + (route.appId ?? '')}>
+          <div className="view">
+            {route.appId ? (
+              <AppPage />
+            ) : (
+              <>
+                {route.page === 'home' && <Home />}
+                {route.page === 'apps' && <Catalog />}
+                {route.page === 'installed' && <Installed />}
+                {route.page === 'updates' && <Updates />}
+                {route.page === 'tasks' && <Tasks />}
+                {route.page === 'history' && <History />}
+                {route.page === 'settings' && <SettingsView />}
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+      <Palette />
       <ConfirmDialog />
       <Toasts />
     </div>

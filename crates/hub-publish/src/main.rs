@@ -319,6 +319,10 @@ struct AppSource {
     #[serde(default)]
     license: Option<String>,
     #[serde(default)]
+    category: Option<String>,
+    #[serde(default)]
+    tags: Vec<String>,
+    #[serde(default)]
     detect: Detect,
 }
 
@@ -435,7 +439,7 @@ fn build(src: &Path, channel: &str, release_key: &Path, out: &Path, valid_days: 
             continue;
         }
         releases.sort_by_key(|r| std::cmp::Reverse(semver::Version::parse(&r.version).ok()));
-        apps.push(AppEntry { id: a.id, name: a.name, summary: a.summary, description: a.description, publisher: a.publisher, homepage: a.homepage, license: a.license, detect: a.detect, releases });
+        apps.push(AppEntry { id: a.id, name: a.name, summary: a.summary, description: a.description, publisher: a.publisher, homepage: a.homepage, license: a.license, category: a.category, tags: a.tags, detect: a.detect, releases });
     }
     let t = now();
     let cat = Catalog {

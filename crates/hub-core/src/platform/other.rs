@@ -6,6 +6,15 @@ use crate::error::HubError;
 pub fn os_version() -> String {
     "0".into()
 }
+pub struct Snapshot;
+pub fn capture() -> Snapshot {
+    Snapshot
+}
+impl Snapshot {
+    pub fn detect(&self, _: &AppEntry, _: Option<&InstallRecord>) -> Option<InstalledInfo> {
+        None
+    }
+}
 pub fn detect(_: &AppEntry, _: Option<&InstallRecord>) -> Option<InstalledInfo> {
     None
 }
